@@ -3,6 +3,7 @@ const User = require('../models/userModel');
 const asyncHandler = require('express-async-handler');
 const validateMongoDBId = require('../utils/validateMongoDBId');
 const { generateRefreshToken } = require('../config/refreshToken');
+const jwt = require('jsonwebtoken');
 
 //Register A User
 const createUser = asyncHandler(async (req, res) => {
@@ -148,6 +149,26 @@ const unBlockuser = asyncHandler(async (req, res) => {
     });
   } catch (error) {}
 });
+
+//handle refresh token
+const handleRefreshToken = asyncHandler(async (req, res) => {
+  const cookie = req.cookies;
+  if (!cookie?.refreshToken) {
+    throw new Error('No Refresh Token found in Cookie');
+  }
+  const refreshToken = cookie.refreshToken;
+  const user = await User.findOne({ refreshToken });
+  if (!user) {
+    throw new Error('No Refresh Token Found In DB Or Not Matched.');
+  }
+  jwt.verify(refreshToken, process.env.JWT_SECRET, (err, decoded) => {
+    if (err || user.id !== decoded.id) {
+      throw new Error('There is something wrong with Refresh Token');
+    }
+    const accessToken = generateToken(user?._id);
+    res.json({ accessToken });
+  });
+});
 module.exports = {
   createUser,
   loginUserCtrl,
@@ -157,4 +178,5 @@ module.exports = {
   updateAUser,
   blockuser,
   unBlockuser,
+  handleRefreshToken,
 };
