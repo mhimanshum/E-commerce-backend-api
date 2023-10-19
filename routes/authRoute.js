@@ -11,12 +11,14 @@ const {
   unBlockuser,
   handleRefreshToken,
   logout,
+  updatePassword,
 } = require('../controller/userCtrl');
 const router = express.Router();
 
 router.post('/register', createUser);
 router.post('/login', loginUserCtrl);
 router.get('/getalluser', getAllUser);
+router.patch('/password', authMiddleware, updatePassword);
 router.get('/refresh', handleRefreshToken);
 router.get('/logout', logout);
 router.get('/:id', authMiddleware, isAdmin, getAUser);
